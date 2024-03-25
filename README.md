@@ -57,7 +57,7 @@ if __name__ == '__main__':
 #### 易语言
 
 ```
-项目根目录下面：/imaxV8_mul_demo/demo.e 文件，运行此实例，需要将imaxV8_mul.dll放置同一个目录下
+项目根目录下面：/imaxV8_mul_demo/x32/demo.e 文件，运行此实例，需要将imaxV8_mul.dll放置同一个目录下
 ```
 ### x64
 
