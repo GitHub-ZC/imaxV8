@@ -5,16 +5,24 @@
 由于本人需要使用32位dll跑js代码，但是去网上找了一圈都没有看到一个开源的32位v8dll，并且找不到支持 es6 语法的dll，导致很多js代码无法执行，为了能支持 **es6 语法**，于是自己百度研究研究，自己编译了一个32位v8引擎，在这，本着开源奉献的精神，分享给大家。
 
 # 更新
-上周已经开源了一个[v8 32位 dll(点击跳转)](https://mp.weixin.qq.com/s/6SrIM8WoFCxmMTYyBiVEMg)，但是由于在这一周的使用情况来看，确实有着很多的不足，我给出的示例是python写的，但是我去尝试了其他的编程语言，发现还是有一些使用兼容的问题。于是通过我的不懈努力(哈哈哈哈哈)，重新编译了一份v8 32 dll，能更好的支持多线程的运行，更好的兼容其他编程语言，以下给出一些编程示例。
+上周已经开源了一个[v8 32位 dll(点击跳转)](https://mp.weixin.qq.com/s/DyM91_XIL2rT0xdgtagg2Q)，但是由于在这一周的使用情况来看，确实有着很多的不足，我给出的示例是python写的，但是我去尝试了其他的编程语言，发现还是有一些使用兼容的问题。于是通过我的不懈努力(哈哈哈哈哈)，重新编译了一份v8 32 dll，能更好的支持多线程的运行，更好的兼容其他编程语言。
+
+最新更新：新增 **64位** 多线程版 dll，使用方法和 32位 dll 一致。
+
+以下给出一些编程示例。
 
 # 代码示例
 ## imaxV8_mul.dll 多线程版
-### python
+
+### x32
+
+#### python
+
 ```python
 import ctypes
 
 # 加载 DLL
-v8_dll = ctypes.cdll.LoadLibrary("./imaxV8_mul.dll")
+v8_dll = ctypes.cdll.LoadLibrary("./imaxV8_mul_demo/x32/imaxV8_mul.dll")
 
 # 导出函数
 runJs_func = v8_dll.__getattr__('_runJs@12')
@@ -46,19 +54,66 @@ if __name__ == '__main__':
         print("JavaScript 执行结果:", res)
 ```
 
-### 易语言
+#### 易语言
+
 ```
 项目根目录下面：/imaxV8_mul_demo/demo.e 文件，运行此实例，需要将imaxV8_mul.dll放置同一个目录下
 ```
+### x64
+
+#### python
+
+```python
+import ctypes
+
+# 加载 DLL
+v8_dll = ctypes.cdll.LoadLibrary("./imaxV8_mul_demo/x64/imaxV8_mul.dll")
+
+# 导出函数
+runJs_func = v8_dll.__getattr__('runJs')
+runJs_func.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+runJs_func.restype = None
+# 导出函数
+createIsolate_func = v8_dll.__getattr__('createIsolate')
+createIsolate_func.restype = ctypes.c_int
+createIsolate_func.argtypes = []
+
+# 创建一个运行实例，这一步是必须的，创建的实例是有限制的，需要和对应的线程一一对应
+isolate_index = createIsolate_func()
+# 创建一个缓冲区用于存储结果
+result_buffer = ctypes.create_string_buffer(2048)
+
+
+def runJs(js_code):
+    # 运行 JavaScript 代码，需要传入一个运行实例
+    runJs_func(js_code.encode(), result_buffer, isolate_index)
+    return result_buffer.value.decode()
+
+
+if __name__ == '__main__':
+    js_code = r"""
+        'hello, ' + 'world'
+    """
+    for i in range(3):
+        res = runJs(js_code)
+        print("JavaScript 执行结果:", res)
+```
+
+
+
 ## imaxV8.dll
-### python
+
+### x32
+
+#### python
+
 ```python
 import ctypes
 import time
 
 def runJs():
     # 加载 DLL
-    mymodule = ctypes.CDLL("./imaxV8.dll")
+    mymodule = ctypes.CDLL("./imaxV8_demo/x32/imaxV8.dll")
 
     # 初始化 V8
     mymodule.initializeV8()
@@ -99,7 +154,13 @@ if __name__ == '__main__':
 
 # 运行示例
 ```shell
-$ .\python-3.12.0-embed-win32\python.exe .\imaxV8_mul_demo\demo.py
+# x32
+$ .\python-3.12.0-embed-win32\python.exe imaxV8_mul_demo\x32\demo.py
+
+# x64
+$ .\python-3.12.0-embed-amd64\python.exe imaxV8_mul_demo\x64\demo.py
+
+# 为了方便调用，项目采用免安装版 python 来调用，读者使用对应位数的python来调用dll即可
 
 # 运行结果
 $ JavaScript 执行结果: hello, world
